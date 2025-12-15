@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Go Stream Cards</title>
+    <style>
+        :root {
+            --bg-color: #f4f6f8;
+            --panel-bg: #ffffff;
+            --primary: #4a90e2;
+            --border: #dde1e6;
+            --black-player-color: #2ecc71; /* 綠色 */
+            --white-player-color: #e74c3c; /* 紅色 */
+            --danger: #e74c3c;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-container {
+            display: flex;
+            gap: 20px;
+            max-width: 1000px;
+            margin: 0 auto;
+            flex: 1;
+            width: 100%;
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        h2 { margin-top: 0; color: #333; font-size: 1.2rem; margin-bottom: 10px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        h3 { margin: 15px 0 10px 0; color: #555; font-size: 1rem; border-left: 4px solid var(--primary); padding-left: 8px;}
+        
+        label { display: block; margin-bottom: 5px; color: #666; font-size: 0.9rem; font-weight: 600; }
+        
+        .left-panel { flex: 0.8; }
+        .right-panel { flex: 1.2; display: flex; flex-direction: column; gap: 10px; }
+
+        input[type="text"], textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            font-family: inherit;
+            margin-bottom: 10px;
+        }
+
+        textarea { flex: 1; resize: none; min-height: 150px; }
+
+        /* 選手選擇區塊 */
+        .player-select-container {
+            background: #fafafa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #ddd;
+        }
+        .checkbox-wrapper input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .checkbox-wrapper label {
+            margin-bottom: 0;
+            cursor: pointer;
+            color: #333;
+        }
+
+        .player-inputs {
+            display: flex;
+            gap: 10px;
+        }
+
+        .select-box {
+            flex: 1;
+        }
+
+        /* 控制滑桿區域 */
+        .control-group {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+        .slider-row label {
+            width: 70px;
+            margin-bottom: 0;
+            font-size: 0.85rem;
+        }
+        .slider-row input[type=range] {
+            flex: 1;
+            cursor: pointer;
+        }
+        .value-display {
+            width: 40px;
+            text-align: right;
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: #333;
+        }
+
+        /* 顏色選擇器樣式 */
+        .color-row {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #ddd;
+        }
+        .color-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        input[type="color"] {
+            border: none;
+            width: 40px;
+            height: 30px;
+            cursor: pointer;
+            background: none;
+            padding: 0;
+        }
+
+        /* 按鈕樣式 */
+        .btn-open {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 1.1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: auto;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .btn-open:hover { background: #357abd; }
+
+        .btn-clear {
+            background: transparent;
+            color: var(--danger);
+            border: 1px solid var(--danger);
+            padding: 8px;
+            font-size: 0.9rem;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-clear:hover { background: var(--danger); color: white; }
+
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <div class="panel left-panel">
+            <h2>1. 資料輸入</h2>
+            
+            <label>比賽名稱</label>
+            <input type="text" id="tournament-name">
+
+            <label>選手名單 (一行一個)</label>
+            <textarea id="name-list" placeholder="選手A&#10;選手B..."></textarea>
+            
+            <button class="btn-clear" id="btn-clear-data">🗑️ 清空所有記錄</button>
+        </div>
+
+        <div class="panel right-panel">
+            <h2>2. 配對與排版</h2>
+
+            <div class="player-select-container">
+                <div class="checkbox-wrapper">
+                    <input type="checkbox" id="show-names-check" checked>
+                    <label for="show-names-check">顯示選手名稱 (未定黑白請取消勾選)</label>
+                </div>
+
+                <div class="player-inputs">
+                    <div class="select-box" style="border-top: 4px solid var(--black-player-color); padding-top: 5px;">
+                        <label style="color: var(--black-player-color);">⚫ 黑方 (Black)</label>
+                        <select id="black-player"><option value="">(空)</option></select>
+                    </div>
+                    <div class="select-box" style="border-top: 4px solid var(--white-player-color); padding-top: 5px;">
+                        <label style="color: var(--white-player-color);">⚪ 白方 (White)</label>
+                        <select id="white-player"><option value="">(空)</option></select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>🏆 比賽名稱設定</h3>
+                
+                <div class="slider-row">
+                    <label>字體大小</label>
+                    <input type="range" id="title-size" min="12" max="60" value="28">
+                    <span class="value-display" id="val-title-size">28px</span>
+                </div>
+                <div class="slider-row">
+                    <label>垂直位置</label>
+                    <input type="range" id="title-top" min="0" max="100" value="10">
+                    <span class="value-display" id="val-title-top">10%</span>
+                </div>
+                <div class="color-row">
+                    <div class="color-item">
+                        <label>背景色</label>
+                        <input type="color" id="title-bg-color" value="#ffd700">
+                    </div>
+                    <div class="color-item">
+                        <label>文字色</label>
+                        <input type="color" id="title-text-color" value="#000000">
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <h3>👥 選手姓名設定</h3>
+                <div class="slider-row">
+                    <label>字體大小</label>
+                    <input type="range" id="name-size" min="20" max="100" value="56">
+                    <span class="value-display" id="val-name-size">56px</span>
+                </div>
+                <div class="slider-row">
+                    <label>垂直位置</label>
+                    <input type="range" id="name-top" min="0" max="100" value="45">
+                    <span class="value-display" id="val-name-top">45%</span>
+                </div>
+            </div>
+            
+            <button class="btn-open" id="btn-open-window">開啟 / 更新圖卡視窗 (600x200)</button>
+        </div>
+    </div>
+
+    <script>
+        // DOM 元素收集
+        const inputs = {
+            list: document.getElementById('name-list'),
+            showNames: document.getElementById('show-names-check'),
+            black: document.getElementById('black-player'),
+            white: document.getElementById('white-player'),
+            tour: document.getElementById('tournament-name'),
+            // 樣式控制
+            tSize: document.getElementById('title-size'),
+            tTop: document.getElementById('title-top'),
+            tBgColor: document.getElementById('title-bg-color'),
+            tTextColor: document.getElementById('title-text-color'),
+            nSize: document.getElementById('name-size'),
+            nTop: document.getElementById('name-top')
+        };
+        
+        const displays = {
+            tSize: document.getElementById('val-title-size'),
+            tTop: document.getElementById('val-title-top'),
+            nSize: document.getElementById('val-name-size'),
+            nTop: document.getElementById('val-name-top')
+        };
+        
+        const btnClear = document.getElementById('btn-clear-data');
+        let popupWindow = null;
+
+        // --- 核心邏輯重構與功能新增 ---
+
+        // 1. 更新下拉選單的通用函式
+        function updateDropdowns() {
+            const currentBlack = inputs.black.value;
+            const currentWhite = inputs.white.value;
+            inputs.black.innerHTML = '';
+            inputs.white.innerHTML = '';
+            
+            const names = inputs.list.value.split('\n').map(n => n.trim()).filter(n => n !== '');
+            
+            if (names.length === 0) {
+                const opt = new Option('(名單為空)', '');
+                inputs.black.add(opt.cloneNode(true));
+                inputs.white.add(opt);
+                return;
+            }
+
+            names.forEach(name => {
+                inputs.black.add(new Option(name, name));
+                inputs.white.add(new Option(name, name));
+            });
+
+            // 嘗試恢復選擇，若該選手已不在名單中則會變成預設值
+            if (names.includes(currentBlack)) inputs.black.value = currentBlack;
+            if (names.includes(currentWhite)) inputs.white.value = currentWhite;
+        }
+
+        // 2. 儲存資料到 LocalStorage
+        function saveData() {
+            const dataToSave = {
+                tourName: inputs.tour.value,
+                playerList: inputs.list.value,
+                selectedBlack: inputs.black.value,
+                selectedWhite: inputs.white.value
+            };
+            localStorage.setItem('goCardData', JSON.stringify(dataToSave));
+        }
+
+        // 3. 讀取資料
+        function loadData() {
+            const savedJSON = localStorage.getItem('goCardData');
+            if (savedJSON) {
+                try {
+                    const data = JSON.parse(savedJSON);
+                    if (data.tourName) inputs.tour.value = data.tourName;
+                    if (data.playerList) {
+                        inputs.list.value = data.playerList;
+                        // 必須先更新下拉選單，才能設定選中值
+                        updateDropdowns(); 
+                    }
+                    // 恢復選中的選手
+                    if (data.selectedBlack) inputs.black.value = data.selectedBlack;
+                    if (data.selectedWhite) inputs.white.value = data.selectedWhite;
+                } catch (e) {
+                    console.error('讀取存檔失敗', e);
+                }
+            }
+        }
+
+        // 4. 清空資料
+        function clearData() {
+            if (confirm('確定要清空所有記錄嗎？\n這將刪除比賽名稱和選手名單。')) {
+                localStorage.removeItem('goCardData');
+                inputs.tour.value = '';
+                inputs.list.value = '';
+                updateDropdowns(); // 重置選單
+                inputs.black.value = '';
+                inputs.white.value = '';
+                openBattleWindow(); // 更新視窗為空狀態
+            }
+        }
+
+        // --- 事件監聽 ---
+
+        // 名單輸入變更：更新選單 + 儲存
+        inputs.list.addEventListener('input', () => {
+            updateDropdowns();
+            saveData();
+            if (popupWindow && !popupWindow.closed) openBattleWindow();
+        });
+
+        // 選擇選手變更：儲存 + 更新視窗
+        [inputs.black, inputs.white].forEach(el => {
+            el.addEventListener('change', () => {
+                saveData();
+                if (popupWindow && !popupWindow.closed) openBattleWindow();
+            });
+        });
+
+        // 比賽名稱變更：儲存 + 更新視窗
+        inputs.tour.addEventListener('input', () => {
+            saveData();
+            if (popupWindow && !popupWindow.closed) openBattleWindow();
+        });
+
+        // 清空按鈕
+        btnClear.addEventListener('click', clearData);
+
+        // 樣式變更監聽 (不需儲存，僅更新顯示)
+        function handleStyleUpdate(e) {
+            if (e.target.id === 'title-size') displays.tSize.textContent = e.target.value + 'px';
+            if (e.target.id === 'title-top') displays.tTop.textContent = e.target.value + '%';
+            if (e.target.id === 'name-size') displays.nSize.textContent = e.target.value + 'px';
+            if (e.target.id === 'name-top') displays.nTop.textContent = e.target.value + '%';
+            if (popupWindow && !popupWindow.closed) openBattleWindow();
+        }
+
+        // 綁定樣式輸入
+        [inputs.tSize, inputs.tTop, inputs.tBgColor, inputs.tTextColor, inputs.nSize, inputs.nTop, inputs.showNames]
+            .forEach(el => el.addEventListener('input', handleStyleUpdate));
+        inputs.showNames.addEventListener('change', handleStyleUpdate);
+
+        // 彈出視窗核心邏輯 (保持原樣)
+        function openBattleWindow() {
+            let blackText, whiteText;
+            if (inputs.showNames.checked) {
+                blackText = inputs.black.value || 'Black Player';
+                whiteText = inputs.white.value || 'White Player';
+            } else {
+                blackText = '---';
+                whiteText = '---';
+            }
+
+            const data = {
+                title: inputs.tour.value.trim() || 'TOURNAMENT NAME',
+                black: blackText,
+                white: whiteText,
+                style: {
+                    tSize: inputs.tSize.value + 'px',
+                    tTop: inputs.tTop.value + '%',
+                    tBgColor: inputs.tBgColor.value,
+                    tTextColor: inputs.tTextColor.value,
+                    nSize: inputs.nSize.value + 'px',
+                    nTop: inputs.nTop.value + '%'
+                }
+            };
+
+            if (popupWindow && !popupWindow.closed) {
+                popupWindow.updateData(data);
+                return;
+            }
+
+            const popupContent = `
+                <!DOCTYPE html>
+                <html lang="zh-TW">
+                <head>
+                    <title>Go Stream Cards 600x200</title>
+                    <style>
+                        body { margin: 0; padding: 0; overflow: hidden; background: #333; }
+                        .battle-card {
+                            width: 600px; height: 200px;
+                            background: linear-gradient(90deg, #1a1a1a 50%, #f0f0f0 50%);
+                            position: relative; overflow: hidden;
+                            font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+                        }
+                        .card-header {
+                            position: absolute; left: 50%; transform: translateX(-50%);
+                            padding: 4px 30px; border-radius: 4px;
+                            font-weight: 900; text-transform: uppercase; letter-spacing: 1px;
+                            z-index: 10; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+                            white-space: nowrap; max-width: 90%; overflow: hidden;
+                            text-overflow: ellipsis; text-align: center;
+                        }
+                        .player-name {
+                            position: absolute; width: 50%; text-align: center;
+                            font-weight: 800; line-height: 1.1; z-index: 2; white-space: nowrap;
+                        }
+                        .name-black { left: 0; color: #2ecc71; text-shadow: 0 4px 8px rgba(0,0,0,1); }
+                        .name-white { left: 50%; color: #e74c3c; text-shadow: 0 2px 0px rgba(255,255,255,0.5); }
+                        .label-deco {
+                            position: absolute; bottom: 5px; font-size: 2rem;
+                            font-weight: 900; opacity: 0.1; pointer-events: none;
+                        }
+                        .vs-badge {
+                            position: absolute; top: 65%; left: 50%; transform: translate(-50%, -50%);
+                            width: 50px; height: 50px; background: #ff4757; color: white;
+                            border-radius: 50%; display: flex; justify-content: center; align-items: center;
+                            font-weight: 900; font-style: italic; font-size: 1.4rem;
+                            border: 3px solid #fff; box-shadow: 0 0 15px rgba(0,0,0,0.4); z-index: 5;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="battle-card">
+                        <div class="card-header" id="p-title">${data.title}</div>
+                        <div class="player-name name-black" id="p-black">${data.black}</div>
+                        <div class="player-name name-white" id="p-white">${data.white}</div>
+                        <div class="label-deco" style="left:10px; color:#fff;">BLACK</div>
+                        <div class="label-deco" style="right:10px; color:#000;">WHITE</div>
+                        <div class="vs-badge">VS</div>
+                    </div>
+                    <script>
+                        window.updateData = function(d) {
+                            const t = document.getElementById('p-title');
+                            const nb = document.getElementById('p-black');
+                            const nw = document.getElementById('p-white');
+                            t.textContent = d.title;
+                            nb.textContent = d.black;
+                            nw.textContent = d.white;
+                            t.style.fontSize = d.style.tSize;
+                            t.style.top = d.style.tTop;
+                            t.style.backgroundColor = d.style.tBgColor;
+                            t.style.color = d.style.tTextColor;
+                            [nb, nw].forEach(el => {
+                                el.style.fontSize = d.style.nSize;
+                                el.style.top = d.style.nTop;
+                            });
+                        }
+                        window.updateData(${JSON.stringify(data)});
+                    <\/script>
+                </body>
+                </html>
+            `;
+            popupWindow = window.open('', 'Go Stream Cards_Chart_Final', 'width=620,height=240,location=no,menubar=no');
+            if (popupWindow) {
+                popupWindow.document.open();
+                popupWindow.document.write(popupContent);
+                popupWindow.document.close();
+            } else {
+                alert('請允許彈出視窗！');
+            }
+        }
+
+        document.addEventListener('contextmenu', (e) => { e.preventDefault(); openBattleWindow(); });
+        document.getElementById('btn-open-window').addEventListener('click', openBattleWindow);
+
+        // 初始化：讀取存檔
+        loadData();
+
+    </script>
+</body>
+</html>
