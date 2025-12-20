@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Go Stream Cards Ultimate</title>
+    <title>Go Stream Cards</title>
     <style>
         :root {
             --bg-color: #f4f6f8;
@@ -67,7 +67,6 @@
 
         textarea { flex: 1; resize: none; min-height: 150px; }
 
-        /* 選手選擇區塊 */
         .player-select-container {
             background: #fafafa;
             padding: 15px;
@@ -93,16 +92,9 @@
             color: #333;
         }
 
-        .player-inputs {
-            display: flex;
-            gap: 10px;
-        }
+        .player-inputs { display: flex; gap: 10px; }
+        .select-box { flex: 1; }
 
-        .select-box {
-            flex: 1;
-        }
-
-        /* 控制滑桿區域 */
         .control-group {
             background: #f8f9fa;
             padding: 15px;
@@ -117,7 +109,7 @@
             margin-bottom: 8px;
         }
         .slider-row label {
-            width: 70px;
+            width: 80px;
             margin-bottom: 0;
             font-size: 0.85rem;
         }
@@ -133,7 +125,6 @@
             color: #333;
         }
 
-        /* 顏色選擇器樣式 */
         .color-row {
             display: flex;
             gap: 20px;
@@ -141,21 +132,9 @@
             padding-top: 10px;
             border-top: 1px dashed #ddd;
         }
-        .color-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        input[type="color"] {
-            border: none;
-            width: 40px;
-            height: 30px;
-            cursor: pointer;
-            background: none;
-            padding: 0;
-        }
+        .color-item { display: flex; align-items: center; gap: 10px; }
+        input[type="color"] { border: none; width: 40px; height: 30px; cursor: pointer; background: none; padding: 0; }
 
-        /* 按鈕樣式 */
         .btn-open {
             background: var(--primary);
             color: white;
@@ -185,6 +164,11 @@
             transition: all 0.2s;
         }
         .btn-clear:hover { background: var(--danger); color: white; }
+
+        .toggle-section {
+            display: flex; align-items: center; justify-content: space-between;
+            background: #eef; padding: 5px 10px; border-radius: 5px; margin-bottom: 10px;
+        }
 
     </style>
 </head>
@@ -236,8 +220,8 @@
                 
                 <div class="slider-row">
                     <label>卡片寬度</label>
-                    <input type="range" id="card-width" min="500" max="2000" value="600">
-                    <span class="value-display" id="val-card-width">600px</span>
+                    <input type="range" id="card-width" min="500" max="2000" value="1000">
+                    <span class="value-display" id="val-card-width">1000px</span>
                 </div>
                 
                 <div class="slider-row">
@@ -277,6 +261,15 @@
                     <input type="range" id="name-top" min="0" max="100" value="45">
                     <span class="value-display" id="val-name-top">45%</span>
                 </div>
+                
+                <div class="slider-row">
+                    <label>姓名水平</label>
+                    <input type="range" id="name-offset-x" min="-200" max="200" value="0">
+                    <span class="value-display" id="val-name-offset-x">0px</span>
+                </div>
+                <div style="font-size:0.8rem; color:#888; text-align:right; margin-bottom:5px;">
+                    (鏡像移動：數值調整左右間距)
+                </div>
 
                 <div class="color-row">
                     <div class="color-item">
@@ -289,13 +282,44 @@
                     </div>
                 </div>
             </div>
+
+            <div class="control-group">
+                <div class="toggle-section">
+                    <h3>⏱️ 計時器圖示設定</h3>
+                    <div style="display:flex; align-items:center; gap:5px;">
+                        <input type="checkbox" id="timer-toggle">
+                        <label for="timer-toggle" style="margin:0; cursor:pointer;">顯示圖示</label>
+                    </div>
+                </div>
+                
+                <div class="slider-row">
+                    <label>高度 (大小)</label>
+                    <input type="range" id="timer-size" min="30" max="150" value="50">
+                    <span class="value-display" id="val-timer-size">50px</span>
+                </div>
+                <div class="slider-row">
+                    <label>長度 (寬度)</label>
+                    <input type="range" id="timer-width" min="50" max="400" value="150">
+                    <span class="value-display" id="val-timer-width">150px</span>
+                </div>
+
+                <div class="slider-row">
+                    <label>圖示水平</label>
+                    <input type="range" id="timer-x" min="0" max="300" value="20">
+                    <span class="value-display" id="val-timer-x">20px</span>
+                </div>
+                <div class="slider-row">
+                    <label>圖示垂直</label>
+                    <input type="range" id="timer-y" min="0" max="100" value="50">
+                    <span class="value-display" id="val-timer-y">50%</span>
+                </div>
+            </div>
             
             <button class="btn-open" id="btn-open-window">開啟 / 更新圖卡視窗</button>
         </div>
     </div>
 
     <script>
-        // DOM 元素收集
         const inputs = {
             list: document.getElementById('name-list'),
             showNames: document.getElementById('show-names-check'),
@@ -313,7 +337,14 @@
             tBgColor: document.getElementById('title-bg-color'),
             tTextColor: document.getElementById('title-text-color'),
             nSize: document.getElementById('name-size'),
-            nTop: document.getElementById('name-top')
+            nTop: document.getElementById('name-top'),
+            nOffsetX: document.getElementById('name-offset-x'),
+            // 計時器設定
+            timerToggle: document.getElementById('timer-toggle'),
+            timerSize: document.getElementById('timer-size'),
+            timerWidth: document.getElementById('timer-width'), // 新增
+            timerX: document.getElementById('timer-x'),
+            timerY: document.getElementById('timer-y')
         };
         
         const displays = {
@@ -323,7 +354,12 @@
             tSize: document.getElementById('val-title-size'),
             tTop: document.getElementById('val-title-top'),
             nSize: document.getElementById('val-name-size'),
-            nTop: document.getElementById('val-name-top')
+            nTop: document.getElementById('val-name-top'),
+            nOffsetX: document.getElementById('val-name-offset-x'),
+            timerSize: document.getElementById('val-timer-size'),
+            timerWidth: document.getElementById('val-timer-width'), // 新增
+            timerX: document.getElementById('val-timer-x'),
+            timerY: document.getElementById('val-timer-y')
         };
         
         const btnClear = document.getElementById('btn-clear-data');
@@ -331,7 +367,6 @@
 
         // --- 核心功能 ---
 
-        // 1. 更新下拉選單
         function updateDropdowns() {
             const currentBlack = inputs.black.value;
             const currentWhite = inputs.white.value;
@@ -339,24 +374,20 @@
             inputs.white.innerHTML = '';
             
             const names = inputs.list.value.split('\n').map(n => n.trim()).filter(n => n !== '');
-            
             if (names.length === 0) {
                 const opt = new Option('(名單為空)', '');
                 inputs.black.add(opt.cloneNode(true));
                 inputs.white.add(opt);
                 return;
             }
-
             names.forEach(name => {
                 inputs.black.add(new Option(name, name));
                 inputs.white.add(new Option(name, name));
             });
-
             if (names.includes(currentBlack)) inputs.black.value = currentBlack;
             if (names.includes(currentWhite)) inputs.white.value = currentWhite;
         }
 
-        // 2. 儲存資料到 LocalStorage
         function saveData() {
             const dataToSave = {
                 tourName: inputs.tour.value,
@@ -365,72 +396,67 @@
                 selectedWhite: inputs.white.value,
                 showNames: inputs.showNames.checked,
                 swapSides: inputs.swapSides.checked,
-                // 圖卡設定
+                
                 cardWidth: inputs.cWidth.value,
                 cardHeight: inputs.cHeight.value,
                 cardRadius: inputs.cRadius.value,
-                // 樣式
+                
                 titleSize: inputs.tSize.value,
                 titleTop: inputs.tTop.value,
                 nameSize: inputs.nSize.value,
                 nameTop: inputs.nTop.value,
+                nameOffsetX: inputs.nOffsetX.value,
                 titleBg: inputs.tBgColor.value,
-                titleText: inputs.tTextColor.value
+                titleText: inputs.tTextColor.value,
+                
+                timerEnabled: inputs.timerToggle.checked,
+                timerSize: inputs.timerSize.value,
+                timerWidth: inputs.timerWidth.value, // 新增
+                timerX: inputs.timerX.value,
+                timerY: inputs.timerY.value
             };
-            localStorage.setItem('goCardData_v3', JSON.stringify(dataToSave));
+            localStorage.setItem('goCardData_v6', JSON.stringify(dataToSave));
             updateUIForSwap();
         }
 
-        // 3. 讀取資料
         function loadData() {
-            const savedJSON = localStorage.getItem('goCardData_v3');
+            const savedJSON = localStorage.getItem('goCardData_v6');
             if (savedJSON) {
                 try {
                     const data = JSON.parse(savedJSON);
                     if (data.tourName) inputs.tour.value = data.tourName;
-                    if (data.playerList) {
-                        inputs.list.value = data.playerList;
-                        updateDropdowns(); 
-                    }
+                    if (data.playerList) { inputs.list.value = data.playerList; updateDropdowns(); }
                     if (data.selectedBlack) inputs.black.value = data.selectedBlack;
                     if (data.selectedWhite) inputs.white.value = data.selectedWhite;
                     if (data.showNames !== undefined) inputs.showNames.checked = data.showNames;
                     if (data.swapSides !== undefined) inputs.swapSides.checked = data.swapSides;
                     
-                    // 恢復圖卡設定並更新文字顯示
-                    if (data.cardWidth) { 
-                        inputs.cWidth.value = data.cardWidth; 
-                        displays.cWidth.textContent = data.cardWidth + 'px';
-                    }
-                    if (data.cardHeight) { 
-                        inputs.cHeight.value = data.cardHeight; 
-                        displays.cHeight.textContent = data.cardHeight + 'px';
-                    }
-                    if (data.cardRadius) {
-                        inputs.cRadius.value = data.cardRadius;
-                        displays.cRadius.textContent = data.cardRadius + 'px';
-                    }
+                    if (data.cardWidth) { inputs.cWidth.value = data.cardWidth; displays.cWidth.textContent = data.cardWidth + 'px'; }
+                    if (data.cardHeight) { inputs.cHeight.value = data.cardHeight; displays.cHeight.textContent = data.cardHeight + 'px'; }
+                    if (data.cardRadius) { inputs.cRadius.value = data.cardRadius; displays.cRadius.textContent = data.cardRadius + 'px'; }
 
-                    // 恢復樣式
                     if (data.titleSize) { inputs.tSize.value = data.titleSize; displays.tSize.textContent = data.titleSize + 'px'; }
                     if (data.titleTop) { inputs.tTop.value = data.titleTop; displays.tTop.textContent = data.titleTop + '%'; }
                     if (data.nameSize) { inputs.nSize.value = data.nameSize; displays.nSize.textContent = data.nameSize + 'px'; }
                     if (data.nameTop) { inputs.nTop.value = data.nameTop; displays.nTop.textContent = data.nameTop + '%'; }
+                    if (data.nameOffsetX) { inputs.nOffsetX.value = data.nameOffsetX; displays.nOffsetX.textContent = data.nameOffsetX + 'px'; }
                     if (data.titleBg) inputs.tBgColor.value = data.titleBg;
                     if (data.titleText) inputs.tTextColor.value = data.titleText;
 
-                } catch (e) {
-                    console.error('讀取存檔失敗', e);
-                }
+                    if (data.timerEnabled !== undefined) inputs.timerToggle.checked = data.timerEnabled;
+                    if (data.timerSize) { inputs.timerSize.value = data.timerSize; displays.timerSize.textContent = data.timerSize + 'px'; }
+                    if (data.timerWidth) { inputs.timerWidth.value = data.timerWidth; displays.timerWidth.textContent = data.timerWidth + 'px'; }
+                    if (data.timerX) { inputs.timerX.value = data.timerX; displays.timerX.textContent = data.timerX + 'px'; }
+                    if (data.timerY) { inputs.timerY.value = data.timerY; displays.timerY.textContent = data.timerY + '%'; }
+
+                } catch (e) { console.error('讀取存檔失敗', e); }
             }
             updateUIForSwap();
         }
 
-        // 輔助：更新 UI 上的左右標示
         function updateUIForSwap() {
             const boxBlack = document.getElementById('box-black');
             const boxWhite = document.getElementById('box-white');
-            
             if (inputs.swapSides.checked) {
                 boxBlack.style.order = "2";
                 boxWhite.style.order = "1";
@@ -440,17 +466,16 @@
             }
         }
 
-        // 4. 清空資料
         function clearData() {
             if (confirm('確定要清空所有記錄嗎？')) {
-                localStorage.removeItem('goCardData_v3');
+                localStorage.removeItem('goCardData_v6');
                 location.reload(); 
             }
         }
 
         // --- 事件監聽 ---
 
-        const basicInputs = [inputs.list, inputs.black, inputs.white, inputs.tour, inputs.showNames, inputs.swapSides];
+        const basicInputs = [inputs.list, inputs.black, inputs.white, inputs.tour, inputs.showNames, inputs.swapSides, inputs.timerToggle];
         basicInputs.forEach(el => {
             el.addEventListener('change', () => {
                 if (el === inputs.list) updateDropdowns();
@@ -460,14 +485,25 @@
         });
 
         function handleRealtimeUpdate(e) {
-            // 更新數值顯示
-            if (e.target.id === 'title-size') displays.tSize.textContent = e.target.value + 'px';
-            if (e.target.id === 'title-top') displays.tTop.textContent = e.target.value + '%';
-            if (e.target.id === 'name-size') displays.nSize.textContent = e.target.value + 'px';
-            if (e.target.id === 'name-top') displays.nTop.textContent = e.target.value + '%';
-            if (e.target.id === 'card-radius') displays.cRadius.textContent = e.target.value + 'px';
-            if (e.target.id === 'card-width') displays.cWidth.textContent = e.target.value + 'px';
-            if (e.target.id === 'card-height') displays.cHeight.textContent = e.target.value + 'px';
+            const map = {
+                'title-size': displays.tSize,
+                'title-top': displays.tTop,
+                'name-size': displays.nSize,
+                'name-top': displays.nTop,
+                'name-offset-x': displays.nOffsetX,
+                'card-radius': displays.cRadius,
+                'card-width': displays.cWidth,
+                'card-height': displays.cHeight,
+                'timer-size': displays.timerSize,
+                'timer-width': displays.timerWidth,
+                'timer-x': displays.timerX,
+                'timer-y': displays.timerY
+            };
+            
+            if (map[e.target.id]) {
+                const suffix = (e.target.id.includes('top') || e.target.id === 'timer-y') ? '%' : 'px';
+                map[e.target.id].textContent = e.target.value + suffix;
+            }
             
             saveData();
             if (popupWindow && !popupWindow.closed) openBattleWindow();
@@ -475,7 +511,9 @@
 
         const styleInputs = [
             inputs.tSize, inputs.tTop, inputs.tBgColor, inputs.tTextColor, 
-            inputs.nSize, inputs.nTop, inputs.cWidth, inputs.cHeight, inputs.cRadius
+            inputs.nSize, inputs.nTop, inputs.nOffsetX,
+            inputs.cWidth, inputs.cHeight, inputs.cRadius,
+            inputs.timerSize, inputs.timerWidth, inputs.timerX, inputs.timerY
         ];
         styleInputs.forEach(el => el.addEventListener('input', handleRealtimeUpdate));
 
@@ -493,7 +531,7 @@
                 whiteText = '---';
             }
 
-            let w = parseInt(inputs.cWidth.value) || 600;
+            let w = parseInt(inputs.cWidth.value) || 1000;
             let h = parseInt(inputs.cHeight.value) || 200;
 
             const data = {
@@ -512,19 +550,29 @@
                     tBgColor: inputs.tBgColor.value,
                     tTextColor: inputs.tTextColor.value,
                     nSize: inputs.nSize.value + 'px',
-                    nTop: inputs.nTop.value + '%'
+                    nTop: inputs.nTop.value + '%',
+                    nOffsetX: inputs.nOffsetX.value 
+                },
+                timer: {
+                    show: inputs.timerToggle.checked,
+                    size: inputs.timerSize.value + 'px',
+                    width: inputs.timerWidth.value + 'px',
+                    x: inputs.timerX.value + 'px',
+                    y: inputs.timerY.value + '%'
                 }
             };
 
             if (popupWindow && !popupWindow.closed) {
                 const currentOuterW = popupWindow.outerWidth;
-                // 寬度+130 (100為綠幕, 30為瀏覽器邊框緩衝)
                 if (Math.abs(currentOuterW - (w + 130)) > 50) { 
                     popupWindow.resizeTo(w + 130, h + 160);
                 }
                 popupWindow.updateData(data);
                 return;
             }
+
+            // 單純的時鐘 SVG，不含背景
+            const clockSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`;
 
             const popupContent = `
                 <!DOCTYPE html>
@@ -567,7 +615,7 @@
                         .player-name {
                             position: absolute; width: 50%; text-align: center;
                             font-weight: 800; line-height: 1.1; z-index: 2; white-space: nowrap;
-                            transition: left 0.3s ease;
+                            transition: left 0.3s ease, transform 0.1s;
                         }
 
                         .name-black { color: #ff6a00; text-shadow: 0 4px 8px rgba(0,0,0,1); }
@@ -586,14 +634,46 @@
                             font-weight: 900; font-style: italic; font-size: 1.4rem;
                             border: 3px solid #fff; box-shadow: 0 0 15px rgba(0,0,0,0.4); z-index: 5;
                         }
+
+                        /* Timer Container (Capsule) */
+                        .timer-container {
+                            position: absolute;
+                            z-index: 8;
+                            background-color: rgba(0,0,0,0.6);
+                            border: 2px solid white;
+                            border-radius: 999px; /* Capsule shape */
+                            display: flex;
+                            align-items: center;
+                            padding: 0;
+                            box-sizing: border-box;
+                            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+                        }
+
+                        /* Clock Icon inside Timer */
+                        .timer-icon-svg {
+                            height: 80%; /* leave some padding */
+                            aspect-ratio: 1/1;
+                            margin-left: 10%; /* slight padding from left */
+                            filter: drop-shadow(0 2px 2px rgba(0,0,0,0.5));
+                        }
+
                     </style>
                 </head>
                 <body>
                     <div class="main-wrapper">
                         <div class="battle-card" id="card">
                             <div class="card-header" id="p-title">${data.title}</div>
+                            
                             <div class="player-name name-black" id="p-black">${data.black}</div>
                             <div class="player-name name-white" id="p-white">${data.white}</div>
+                            
+                            <div class="timer-container" id="timer-black">
+                                <div class="timer-icon-svg">${clockSvg}</div>
+                            </div>
+                            <div class="timer-container" id="timer-white">
+                                <div class="timer-icon-svg">${clockSvg}</div>
+                            </div>
+
                             <div class="label-deco" id="lbl-black" style="color:#fff;">BLACK</div>
                             <div class="label-deco" id="lbl-white" style="color:#000;">WHITE</div>
                             <div class="vs-badge">VS</div>
@@ -607,6 +687,8 @@
                             const nw = document.getElementById('p-white');
                             const lb = document.getElementById('lbl-black');
                             const lw = document.getElementById('lbl-white');
+                            const tb = document.getElementById('timer-black');
+                            const tw = document.getElementById('timer-white');
 
                             t.textContent = d.title;
                             nb.textContent = d.black;
@@ -616,16 +698,36 @@
                             card.style.height = d.config.height;
                             card.style.borderRadius = d.config.radius;
 
+                            // Mirror Logic
+                            const offsetX = parseInt(d.style.nOffsetX);
+
                             if (d.config.swap) {
                                 card.classList.add('swapped');
                                 nw.style.left = '0%'; nb.style.left = '50%';
+                                
+                                // Mirror Logic (Swapped)
+                                nw.style.transform = \`translateX(\${offsetX}px)\`;
+                                nb.style.transform = \`translateX(\${-offsetX}px)\`;
+
                                 lb.style.right = '10px'; lb.style.left = 'auto';
                                 lw.style.left = '10px'; lw.style.right = 'auto';
+                                
+                                tb.style.right = d.timer.x; tb.style.left = 'auto';
+                                tw.style.left = d.timer.x; tw.style.right = 'auto';
+
                             } else {
                                 card.classList.remove('swapped');
                                 nb.style.left = '0%'; nw.style.left = '50%';
+                                
+                                // Mirror Logic (Normal)
+                                nb.style.transform = \`translateX(\${offsetX}px)\`;
+                                nw.style.transform = \`translateX(\${-offsetX}px)\`;
+
                                 lb.style.left = '10px'; lb.style.right = 'auto';
                                 lw.style.right = '10px'; lw.style.left = 'auto';
+                                
+                                tb.style.left = d.timer.x; tb.style.right = 'auto';
+                                tw.style.right = d.timer.x; tw.style.left = 'auto';
                             }
 
                             t.style.fontSize = d.style.tSize;
@@ -633,9 +735,18 @@
                             t.style.backgroundColor = d.style.tBgColor;
                             t.style.color = d.style.tTextColor;
                             
-                            [nb, nw].forEach(el => {
-                                el.style.fontSize = d.style.nSize;
-                                el.style.top = d.style.nTop;
+                            nb.style.fontSize = d.style.nSize;
+                            nb.style.top = d.style.nTop;
+                            nw.style.fontSize = d.style.nSize;
+                            nw.style.top = d.style.nTop;
+
+                            // Timer Updates
+                            [tb, tw].forEach(el => {
+                                el.style.display = d.timer.show ? 'flex' : 'none';
+                                el.style.height = d.timer.size;  // 高度 (Size)
+                                el.style.width = d.timer.width;  // 寬度 (Length)
+                                el.style.top = d.timer.y;
+                                el.style.transform = 'translateY(-50%)'; 
                             });
                         }
                         window.updateData(${JSON.stringify(data)});
